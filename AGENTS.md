@@ -2,10 +2,14 @@
 
 For trivial changes or questions, handle the task directly.
 
-For substantive implementation tasks, use the delegated workflow below
-by default. If the user asks for direct work, solo work, or no subagents,
-use the direct workflow instead. Keep the selected workflow for the
-current task unless the user changes it.
+For substantive implementation tasks, use the direct workflow by default.
+Use the delegated workflow only when the user explicitly requests it for
+the current task, for example: "use subagents", "use the delegated
+workflow", or "use the planner -> coder -> reviewer flow". Do not infer
+delegation from task size, complexity, or mentions of agent setup.
+If the user asks for direct work, solo work, or no subagents, use the
+direct workflow. Keep the selected workflow for the current task unless
+the user changes it; delegation does not carry over to new tasks.
 
 ## Direct workflow
 

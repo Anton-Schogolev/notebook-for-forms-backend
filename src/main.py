@@ -1,13 +1,29 @@
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .dependencies.config import Settings
+from src.api.auth.router import router as auth_router
 
-settings = Settings()
+from .dependencies.config import get_settings
+from .dependencies.database import engine
 
-app = FastAPI()
+settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
+    try:
+        yield
+    finally:
+        await engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
+
+app.include_router(router=auth_router)
 
 
 @app.get("/")
@@ -20,7 +36,7 @@ app.add_middleware(
     # allow_private_network=True,
     allow_credentials=False,
     expose_headers=[],
-    allow_origins=["*"],
+    allow_origins=settings.origins,
     allow_headers=["*"],
     allow_methods=["GET", "PUT", "POST", "DELETE"],
 )
