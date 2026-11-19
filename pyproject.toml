@@ -1,0 +1,44 @@
+[project]
+name = "notebook-for-forms-backend"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.162.2",
+    "pydantic-settings>=2.16.2",
+    "pydantic[email]>=2.14.3",
+    "python-dotenv>=1.2.4",
+    "sqlmodel>=0.0.50",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "ruff>=0.17.5",
+]
+
+[tool.fastapi]
+entrypoint = "src.main:app"
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+files = ["src"]
+strict = true
+warn_unreachable = true
+show_error_codes = true
+pretty = true
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E4",  # Import placement
+    "E7",  # Statement errors
+    "E9",  # Runtime-related errors
+    "F",   # Undefined names, unused imports and variables
+    "I",   # Import sorting
+    "UP",  # Modern Python syntax
+    "B",   # Common bug patterns
+    "SIM", # Simplification suggestions
+]
