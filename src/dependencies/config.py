@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     admin_password: str
 
     origins: list[str]
+
+    secret: str
+
     database_url: str = Field(exclude=True, repr=False)
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")

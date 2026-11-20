@@ -11,6 +11,22 @@ If the user asks for direct work, solo work, or no subagents, use the
 direct workflow. Keep the selected workflow for the current task unless
 the user changes it; delegation does not carry over to new tasks.
 
+## Scope and approval
+
+- Keep working code and existing development workflows as they are unless the
+  user explicitly approves changing them. This includes cleanup, refactors,
+  type annotations, and decorator signatures.
+- Call out proposed changes to application entry points, development commands,
+  and scripts explicitly in the plan. Verify whether the existing workflow can
+  support the requested change before proposing a replacement.
+- Put optional improvements at the end of the plan under **Optional
+  suggestions**. Briefly explain the benefit of each suggestion, such as making
+  a small block easier to read. Implement an optional suggestion only if the
+  user explicitly approves it.
+- If implementation reveals a change beyond the approved plan, explain the
+  specific change and why it is needed. Wait for explicit approval before
+  making it.
+
 ## Direct workflow
 
 The top-level agent performs all work itself. Do not spawn subagents.

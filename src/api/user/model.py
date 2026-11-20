@@ -14,6 +14,6 @@ class UserBase(SQLModel):
 
 class User(UserBase, table=True):
     id: int = Field(primary_key=True)
-    email: str = Field(unique=True)
+    username: str = Field(unique=True)
     hashed_password: str
     role: UserRole = UserRole.USER

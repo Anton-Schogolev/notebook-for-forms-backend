@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
+
+compose=(docker compose --progress plain -f tests/compose.yaml)
+
+cleanup() {
+    local status=$?
+    trap - EXIT
+    if "${compose[@]}" down; then
+        exit "$status"
+    elif (( status != 0 )); then
+        exit "$status"
+    fi
+    exit 1
+}
+
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+"${compose[@]}" up -d --wait
+export TEST_DATABASE_URL=postgresql+psycopg://notebook_auth_test:notebook_auth_test@127.0.0.1:55432/notebook_auth_test
+uv run python -m pytest tests "$@"
