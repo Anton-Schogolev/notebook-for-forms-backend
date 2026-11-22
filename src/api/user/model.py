@@ -13,7 +13,7 @@ class UserBase(SQLModel):
 
 
 class User(UserBase, table=True):
-    id: int = Field(primary_key=True)
+    id: int | None = Field(primary_key=True, default=None)
     username: str = Field(unique=True)
     hashed_password: str
     role: UserRole = UserRole.USER

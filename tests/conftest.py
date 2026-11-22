@@ -1,5 +1,6 @@
 from collections.abc import AsyncIterator, Iterator
 from contextlib import AsyncExitStack
+from secrets import token_hex
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,7 +9,7 @@ from sqlalchemy.engine import make_url
 from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.dependencies.config import Settings
+from src.dependencies.config import Settings, get_settings
 from src.dependencies.database import get_session
 from src.main import create_app
 
@@ -22,7 +23,11 @@ class TestSettings(Settings):
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     settings = TestSettings(
-        admin_username="test-admin", admin_password="test-password", origins=[]
+        admin_username="test-admin",
+        admin_password="test-password",
+        origins=[],
+        secret=token_hex(32),
+        access_token_expire_minutes=5,
     )
     url = make_url(settings.database_url)
     if (
@@ -33,6 +38,7 @@ def client() -> Iterator[TestClient]:
         pytest.fail("Use the dedicated notebook_auth_test database and user.")
 
     app = create_app(settings)
+    app.dependency_overrides[get_settings] = lambda: settings
     resources = AsyncExitStack()
 
     async def configure_test_session() -> None:

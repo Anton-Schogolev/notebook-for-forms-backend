@@ -8,14 +8,17 @@ Requires Python 3.12+, uv, and Docker Compose. Run commands from the project roo
 2. Copy `.env.example` to `.env` if needed, then set local credentials. Keep
    `DATABASE_URL` consistent with `POSTGRES_*`; URL-encode special characters.
 3. Start PostgreSQL: `docker compose up -d --wait db`.
-4. Start FastAPI with `uv run dev` or `uv run fastapi dev`.
+4. Initialize the schema on the fresh database with `uv run alembic upgrade head`.
+   On an existing database, review pending migrations first. The email-to-username
+   migration deletes existing user rows.
+5. Start FastAPI with `uv run dev` or `uv run fastapi dev`.
 
 PostgreSQL 18 runs in Docker at `localhost:5432`; FastAPI runs locally.
 The application uses an async Psycopg engine and SQLModel sessions. Import
 `SessionDep` from `src.dependencies.database` in async routes and await database
 operations. Sessions are closed after each request; writes must be committed
 explicitly. The engine's connection pool is disposed when the application shuts
-down. Tables and migrations are not yet configured.
+down. Alembic manages the database schema.
 
 ## Database commands
 

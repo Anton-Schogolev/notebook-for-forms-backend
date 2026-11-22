@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 def registration_payload() -> dict[str, str | bool]:
     return {
         "username": "alice",
-        "password": "test-password",
+        "password": "test_password",
         "is_encryption_enabled": True,
     }
 
@@ -20,6 +20,7 @@ def test_register_login_and_get_profile(
     response = client.post(
         "/auth/token",
         data={
+            "grant_type": "password",
             "username": registration_payload["username"],
             "password": registration_payload["password"],
         },
@@ -27,6 +28,8 @@ def test_register_login_and_get_profile(
     assert response.status_code == 200, (
         "POST /auth/token should accept valid credentials"
     )
+    assert response.headers["Cache-Control"] == "no-store"
+    assert response.headers["Pragma"] == "no-cache"
     token = response.json()
     assert token.get("token_type") == "bearer", "POST /auth/token should return bearer"
     access_token = token.get("access_token")
@@ -69,12 +72,14 @@ def test_login_rejects_wrong_password(
     response = client.post(
         "/auth/token",
         data={
+            "grant_type": "password",
             "username": registration_payload["username"],
-            "password": "wrong-password",
+            "password": "wrong_password",
         },
     )
 
-    assert response.status_code == 401, (
+    assert response.json()["error"] == "invalid_grant"
+    assert response.status_code == 400, (
         "POST /auth/token should reject the wrong password"
     )
 
@@ -82,22 +87,29 @@ def test_login_rejects_wrong_password(
 def test_login_rejects_unknown_username(client: TestClient) -> None:
     response = client.post(
         "/auth/token",
-        data={"username": "unknown_user", "password": "test-password"},
+        data={
+            "grant_type": "password",
+            "username": "unknown_user",
+            "password": "test-password",
+        },
     )
 
-    assert response.status_code == 401
+    assert response.status_code == 400
+    assert response.json()["error"] == "invalid_grant"
 
 
 def test_profile_requires_bearer_token(client: TestClient) -> None:
     response = client.get("/auth/me")
 
     assert response.status_code == 401
+    assert response.headers["WWW-Authenticate"] == "Bearer"
 
 
 def test_profile_rejects_invalid_bearer_token(client: TestClient) -> None:
     response = client.get("/auth/me", headers={"Authorization": "Bearer invalid-token"})
 
     assert response.status_code == 401
+    assert response.headers["WWW-Authenticate"] == "Bearer"
 
 
 @pytest.mark.parametrize(
@@ -127,20 +139,35 @@ def test_register_rejects_invalid_fields(
 
 
 @pytest.mark.parametrize(
-    ("data", "missing_field"),
+    ("form", "error"),
     [
-        ({"username": "alice"}, "password"),
-        ({"password": "test-password"}, "username"),
+        ("username=alice&password=test", "invalid_request"),
+        ("grant_type=password&password=test", "invalid_request"),
+        ("grant_type=password&username=alice", "invalid_request"),
+        ("grant_type=password&username=alice&password=", "invalid_request"),
+        (
+            "grant_type=password&username=alice&username=bob&password=test",
+            "invalid_request",
+        ),
+        ("grant_type=client_credentials", "unsupported_grant_type"),
     ],
 )
-def test_login_requires_form_fields(
-    client: TestClient, data: dict[str, str], missing_field: str
-) -> None:
-    response = client.post("/auth/token", data=data)
-
-    assert response.status_code == 422, (
-        "POST /auth/token should reject incomplete input"
+def test_login_rejects_invalid_form(client: TestClient, form: str, error: str) -> None:
+    response = client.post(
+        "/auth/token",
+        content=form,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
-    assert any(
-        error["loc"] == ["body", missing_field] for error in response.json()["detail"]
-    ), f"Login validation should identify the missing {missing_field} field"
+    assert response.status_code == 400
+    assert response.json()["error"] == error
+
+
+def test_token_openapi_contract(client: TestClient) -> None:
+    document = client.get("/openapi.json").json()
+    operation = document["paths"]["/auth/token"]["post"]
+    assert set(operation["responses"]) == {"200", "400"}
+    schema = operation["requestBody"]["content"]["application/x-www-form-urlencoded"][
+        "schema"
+    ]
+    schema = document["components"]["schemas"][schema["$ref"].split("/")[-1]]
+    assert set(schema["required"]) == {"grant_type", "username", "password"}

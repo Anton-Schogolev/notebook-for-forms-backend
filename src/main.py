@@ -1,14 +1,24 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.api.auth.router import router as auth_router
+from src.api.exception_handlers import EXCEPTION_HANDLERS
 from src.api.user.router import router as user_router
 
 from .dependencies.config import Settings, get_settings
+
+
+class NotebookAPI(FastAPI):
+    def openapi(self) -> dict[str, Any]:
+        schema = super().openapi()
+        # The token route maps FastAPI form validation errors to OAuth 400 responses.
+        schema["paths"]["/auth/token"]["post"]["responses"].pop("422", None)
+        return schema
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -23,7 +33,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             await engine.dispose()
 
-    app = FastAPI(lifespan=lifespan)
+    app = NotebookAPI(lifespan=lifespan, exception_handlers=EXCEPTION_HANDLERS)
     app.include_router(router=auth_router)
     app.include_router(router=user_router)
 
