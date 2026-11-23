@@ -80,7 +80,7 @@ def test_update_tab_increments_version(authenticated_client: TestClient) -> None
     assert response.json() == [{"id": tab_id, "title": "Final", "version": 3}]
 
 
-@pytest.mark.parametrize("method", ["POST", "GET", "PUT"])
+@pytest.mark.parametrize("method", ["POST", "GET", "PUT", "DELETE"])
 def test_tabs_require_authentication(client: TestClient, method: str) -> None:
     tab_id = str(uuid4())
     path = "/tabs"
@@ -90,6 +90,8 @@ def test_tabs_require_authentication(client: TestClient, method: str) -> None:
     elif method == "PUT":
         path = f"/tabs/{tab_id}/metadata"
         payload = {"title": "Renamed"}
+    elif method == "DELETE":
+        path = f"/tabs/{tab_id}"
 
     response = client.request(method, path, json=payload)
     assert response.status_code == 401
@@ -126,3 +128,42 @@ def test_only_owner_can_rename_tab(client: TestClient) -> None:
     response = client.put(path, headers=alice, json={"title": "Reviewed"})
     assert response.status_code == 200
     assert response.json() == {**tab, "title": "Reviewed", "version": 2}
+
+
+def test_owner_deletes_one_tab(authenticated_client: TestClient) -> None:
+    target = {"id": str(uuid4()), "title": "Draft"}
+    kept = {"id": str(uuid4()), "title": "Notes"}
+    for tab in (target, kept):
+        assert authenticated_client.post("/tabs", json=tab).status_code == 201
+
+    response = authenticated_client.delete(f"/tabs/{target['id']}")
+    assert response.status_code == 204
+    assert response.content == b""
+
+    response = authenticated_client.get("/tabs")
+    assert response.status_code == 200
+    assert response.json() == [{**kept, "version": 1}]
+
+
+def test_delete_missing_tab(authenticated_client: TestClient) -> None:
+    response = authenticated_client.delete(f"/tabs/{uuid4()}")
+    assert response.status_code == 404
+
+
+def test_only_owner_can_delete_tab(client: TestClient) -> None:
+    alice = sign_in(client, "alice")
+    bob = sign_in(client, "bobby")
+    tab = {"id": str(uuid4()), "title": "Notes"}
+    assert client.post("/tabs", headers=alice, json=tab).status_code == 201
+
+    response = client.delete(f"/tabs/{tab['id']}", headers=bob)
+    assert response.status_code == 404
+
+    response = client.get("/tabs", headers=alice)
+    assert response.status_code == 200
+    assert response.json() == [{**tab, "version": 1}]
+
+
+def test_delete_invalid_tab_id(authenticated_client: TestClient) -> None:
+    response = authenticated_client.delete("/tabs/invalid")
+    assert response.status_code == 422

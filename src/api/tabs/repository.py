@@ -55,5 +55,12 @@ class TabRepository:
         await self.session.commit()
         return tab
 
+    async def delete(self, tab_id: UUID, user_id: int) -> None:
+        tab = await self.get_one(user_id, tab_id)
+        if not tab:
+            raise TabNotFound()
+        await self.session.delete(tab)
+        await self.session.commit()
+
 
 TabRepositoryDep = Annotated[TabRepository, Depends(TabRepository)]

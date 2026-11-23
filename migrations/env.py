@@ -7,6 +7,7 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel
 
+from src.api.tabs.model import Tab  # noqa: F401
 from src.api.user.model import User  # noqa: F401
 from src.dependencies.config import get_settings
 

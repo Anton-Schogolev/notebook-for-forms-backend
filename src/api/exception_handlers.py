@@ -7,6 +7,7 @@ from fastapi.responses import JSONResponse
 
 from src.api.auth.exceptions import JWTException
 from src.api.auth.router import login
+from src.api.tabs.exceptions import TabNotFound
 from src.api.user.exceptions import UsernameAlreadyTaken
 
 
@@ -48,9 +49,17 @@ async def handle_request_validation(
     )
 
 
+async def handle_tab_not_found(_request: Request, _exc: TabNotFound) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_404_NOT_FOUND,
+        content={"detail": "Tab not found"},
+    )
+
+
 # It's nigh impossible to type this dict so each key matches its handler's exception type.
 EXCEPTION_HANDLERS: Any = {
     RequestValidationError: handle_request_validation,
     UsernameAlreadyTaken: handle_username_taken,
     JWTException: handle_jwt_exception,
+    TabNotFound: handle_tab_not_found,
 }

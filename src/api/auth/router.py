@@ -35,7 +35,15 @@ async def register(
     await auth_service.register(user)
 
 
-@router.get("/me", response_model=CurrentUserOut)
+@router.get(
+    "/me",
+    response_model=CurrentUserOut,
+    responses={
+        status.HTTP_401_UNAUTHORIZED: {
+            "description": "Missing or invalid bearer token"
+        },
+    },
+)
 async def get_profile(user: CurrentUserDep, auth_service: AuthServiceDep) -> Any:
     return await auth_service.get_profile(id=user.id)
 

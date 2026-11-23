@@ -28,5 +28,8 @@ class TabsService:
         )
         return TabOut(**updated_tab.model_dump())
 
+    async def delete_tab(self, tab_id: UUID, user_id: int) -> None:
+        await self.tab_repository.delete(tab_id=tab_id, user_id=user_id)
+
 
 TabServiceDep = Annotated[TabsService, Depends(TabsService)]
