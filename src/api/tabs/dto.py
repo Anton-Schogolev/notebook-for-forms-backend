@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-from sqlmodel import SQLModel
 
 from src.api.tabs.model import TabBase
 
@@ -17,5 +16,5 @@ class TabOut(TabBase):
     id: UUID
 
 
-class TabUpdate(SQLModel):
+class TabUpdate(BaseModel):
     title: str = title_validation
