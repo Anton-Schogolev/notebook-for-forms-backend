@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from src.api.auth.router import router as auth_router
 from src.api.exception_handlers import EXCEPTION_HANDLERS
+from src.api.tab.router import router as tab_router
 from src.api.tabs.router import router as tabs_router
 from src.api.user.router import router as user_router
 
@@ -38,6 +39,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(router=auth_router)
     app.include_router(router=user_router)
     app.include_router(router=tabs_router)
+    app.include_router(router=tab_router)
 
     # @app.get("/", response_model=None)
     # async def root() -> Settings:
