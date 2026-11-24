@@ -18,5 +18,5 @@ class StoredInfoField(TypedDict):
 
 
 class TabContent(SQLModel, table=True):
-    tab_id: UUID = Field(primary_key=True, foreign_key="tab.id")
+    tab_id: UUID = Field(primary_key=True, foreign_key="tab.id", ondelete="CASCADE")
     items: list[StoredInfoField] = Field(default_factory=list, sa_type=JSONB)

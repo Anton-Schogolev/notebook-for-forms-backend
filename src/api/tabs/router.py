@@ -52,7 +52,11 @@ async def update_tab(
     return await tabs_service.update_tab(data, tab_id=tab_id, user_id=current_user.id)
 
 
-@router.delete("/{tab_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{tab_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={status.HTTP_404_NOT_FOUND: {"description": "Tab not found"}},
+)
 async def delete_tab(
     tab_id: UUID, current_user: CurrentUserDep, tabs_service: TabServiceDep
 ) -> None:
